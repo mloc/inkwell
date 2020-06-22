@@ -4,7 +4,7 @@ use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMLookupIntrinsicID, LLVMGetIntrinsicDeclaration};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
 #[llvm_versions(7.0..=latest)]
@@ -37,7 +37,7 @@ use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
 use crate::support::{to_c_str, LLVMString};
 use crate::targets::{InitializationConfig, Target, TargetTriple};
-use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
+use crate::types::{AsTypeRef, BasicType, FunctionType, StructType, BasicTypeEnum};
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 #[llvm_versions(7.0..=latest)]
 use crate::values::BasicValue;
@@ -1372,6 +1372,28 @@ impl<'ctx> Module<'ctx> {
         };
 
         DebugInfoBuilder::new(dib)
+    }
+
+    /// get intrinsic
+    pub unsafe fn get_intrinsic(&self, name: &str, param_types: &[BasicTypeEnum<'ctx>]) -> Option<FunctionValue<'ctx>> {
+        let intrinsic_id = unsafe {
+            LLVMLookupIntrinsicID(name.as_ptr() as *const ::libc::c_char, name.len())
+        };
+
+        // 0 is returned if lookup fails
+        if intrinsic_id == 0 {
+            return None;
+        }
+
+        let mut param_types: Vec<_> = param_types.iter()
+                                                 .map(|val| val.as_type_ref())
+                                                 .collect();
+
+        let intrinsic_fn = unsafe {
+            LLVMGetIntrinsicDeclaration(self.module.get(), intrinsic_id, param_types.as_mut_ptr(), param_types.len())
+        };
+
+        FunctionValue::new(intrinsic_fn)
     }
 }
 
