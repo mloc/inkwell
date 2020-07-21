@@ -1,7 +1,7 @@
 //! A `Builder` enables you to build instructions.
 
 use either::{Either, Left, Right};
-use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildAtomicRMW, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff, LLVMBuildNSWAdd, LLVMBuildNUWAdd, LLVMBuildNSWSub, LLVMBuildNUWSub, LLVMBuildNSWMul, LLVMBuildNUWMul, LLVMBuildSDiv, LLVMBuildSRem, LLVMBuildURem, LLVMBuildFRem, LLVMBuildNSWNeg, LLVMBuildNUWNeg, LLVMBuildFPToUI, LLVMBuildFPToSI, LLVMBuildSIToFP, LLVMBuildUIToFP, LLVMBuildFPTrunc, LLVMBuildFPExt, LLVMBuildIntCast, LLVMBuildFPCast, LLVMBuildSExtOrBitCast, LLVMBuildZExtOrBitCast, LLVMBuildTruncOrBitCast, LLVMBuildSwitch, LLVMAddCase, LLVMBuildShl, LLVMBuildAShr, LLVMBuildLShr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildExactSDiv, LLVMBuildTrunc, LLVMBuildSExt, LLVMBuildZExt, LLVMBuildSelect, LLVMBuildAddrSpaceCast, LLVMBuildBitCast, LLVMBuildShuffleVector, LLVMBuildVAArg, LLVMBuildIndirectBr, LLVMAddDestination};
+use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildAtomicRMW, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff, LLVMBuildNSWAdd, LLVMBuildNUWAdd, LLVMBuildNSWSub, LLVMBuildNUWSub, LLVMBuildNSWMul, LLVMBuildNUWMul, LLVMBuildSDiv, LLVMBuildSRem, LLVMBuildURem, LLVMBuildFRem, LLVMBuildNSWNeg, LLVMBuildNUWNeg, LLVMBuildFPToUI, LLVMBuildFPToSI, LLVMBuildSIToFP, LLVMBuildUIToFP, LLVMBuildFPTrunc, LLVMBuildFPExt, LLVMBuildIntCast, LLVMBuildFPCast, LLVMBuildSExtOrBitCast, LLVMBuildZExtOrBitCast, LLVMBuildTruncOrBitCast, LLVMBuildSwitch, LLVMAddCase, LLVMBuildShl, LLVMBuildAShr, LLVMBuildLShr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildExactSDiv, LLVMBuildTrunc, LLVMBuildSExt, LLVMBuildZExt, LLVMBuildSelect, LLVMBuildAddrSpaceCast, LLVMBuildBitCast, LLVMBuildShuffleVector, LLVMBuildVAArg, LLVMBuildIndirectBr, LLVMAddDestination, LLVMBuildLandingPad, LLVMBuildInvoke, LLVMBuildResume};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMBuildAtomicCmpXchg;
 #[llvm_versions(8.0..=latest)]
@@ -12,7 +12,7 @@ use llvm_sys::{LLVMTypeKind};
 use crate::{AtomicOrdering, AtomicRMWBinOp, IntPredicate, FloatPredicate};
 use crate::basic_block::BasicBlock;
 use crate::support::to_c_str;
-use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
+use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, LandingPadValue, InstructionOpcode, CallSiteValue};
 #[llvm_versions(3.9..=latest)]
 use crate::values::StructValue;
 use crate::types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
@@ -1762,6 +1762,70 @@ impl<'ctx> Builder<'ctx> {
         };
 
         Ok(StructValue::new(val))
+    }
+
+    // https://llvm.org/docs/LangRef.html#landingpad-instruction<Paste>
+    pub fn build_landingpad<BT: BasicType<'ctx>>(&self, ty: BT, name: &str) -> LandingPadValue<'ctx> {
+        let c_string = to_c_str(name);
+
+        let value = unsafe {
+            // Personality fn val is an old, optional arg. Passing null is safe & the right thing to do.
+            LLVMBuildLandingPad(self.builder, ty.as_type_ref(), std::ptr::null_mut(), 0, c_string.as_ptr())
+        };
+
+        LandingPadValue::new(value)
+    }
+
+    // copied from call, TODO: cleanup
+    // https://llvm.org/docs/LangRef.html#invoke-instruction
+    pub fn build_invoke<F>(&self, function: F, args: &[BasicValueEnum<'ctx>], then_block: BasicBlock<'ctx>, catch_block: BasicBlock<'ctx>, name: &str) -> CallSiteValue<'ctx>
+    where
+        F: Into<FunctionOrPointerValue<'ctx>>,
+    {
+        let fn_val_ref = match function.into() {
+            Left(val) => val.as_value_ref(),
+            Right(val) => {
+                // If using a pointer value, we must validate it's a valid function ptr
+                let value_ref = val.as_value_ref();
+                let ty_kind = unsafe { LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(value_ref))) };
+                let is_a_fn_ptr = match ty_kind {
+                    LLVMTypeKind::LLVMFunctionTypeKind => true,
+                    _ => false,
+                };
+
+                // REVIEW: We should probably turn this into a Result?
+                assert!(is_a_fn_ptr, "build_call called with a pointer which is not a function pointer");
+
+                value_ref
+            },
+        };
+
+        // LLVM gets upset when void return calls are named because they don't return anything
+        let name = unsafe {
+            match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(fn_val_ref)))) {
+                LLVMTypeKind::LLVMVoidTypeKind => "",
+                _ => name,
+            }
+        };
+
+        let c_string = to_c_str(name);
+        let mut args: Vec<LLVMValueRef> = args.iter()
+                                              .map(|val| val.as_value_ref())
+                                              .collect();
+        let value = unsafe {
+            LLVMBuildInvoke(self.builder, fn_val_ref, args.as_mut_ptr(), args.len() as u32, then_block.basic_block, catch_block.basic_block, c_string.as_ptr())
+        };
+
+        CallSiteValue::new(value)
+    }
+
+    // https://llvm.org/docs/LangRef.html#resume-instruction
+    pub fn build_resume<EV: BasicValue<'ctx>>(&self, exception: EV) -> InstructionValue<'ctx> {
+        let value = unsafe {
+            LLVMBuildResume(self.builder, exception.as_value_ref())
+        };
+
+        InstructionValue::new(value)
     }
 }
 
