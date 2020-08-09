@@ -2,7 +2,7 @@ use llvm_sys::core::LLVMGetTypeKind;
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMTypeRef;
 
-use crate::types::{IntType, VoidType, FunctionType, PointerType, VectorType, ArrayType, StructType, FloatType};
+use crate::types::{IntType, VoidType, FunctionType, PointerType, VectorType, ArrayType, StructType, FloatType, TokenType};
 use crate::types::traits::AsTypeRef;
 use crate::values::IntValue;
 
@@ -69,6 +69,8 @@ enum_type_set! {
         VectorType,
         /// A valueless type.
         VoidType,
+        /// A token type.
+        TokenType,
     }
 }
 enum_type_set! {
@@ -78,7 +80,7 @@ enum_type_set! {
         ArrayType,
         /// A floating point type.
         FloatType,
-        // An integer type.
+        /// An integer type.
         IntType,
         /// A pointer type.
         PointerType,
@@ -260,6 +262,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             AnyTypeEnum::VectorType(t) => t.size_of(),
             AnyTypeEnum::VoidType(_) => None,
             AnyTypeEnum::FunctionType(_) => None,
+            AnyTypeEnum::TokenType(_) => None,
         }
     }
 }
