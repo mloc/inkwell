@@ -4,7 +4,7 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use crate::types::{AnyTypeEnum, BasicTypeEnum};
 use crate::values::traits::AsValueRef;
-use crate::values::{IntValue, FunctionValue, PointerValue, VectorValue, ArrayValue, StructValue, FloatValue, PhiValue, InstructionValue, MetadataValue};
+use crate::values::{IntValue, FunctionValue, PointerValue, VectorValue, ArrayValue, StructValue, FloatValue, PhiValue, InstructionValue, MetadataValue, TokenValue};
 
 use std::convert::TryFrom;
 
@@ -61,9 +61,9 @@ macro_rules! enum_value_set {
 }
 
 enum_value_set! {AggregateValueEnum: ArrayValue, StructValue}
-enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue, VectorValue, InstructionValue}
-enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue}
-enum_value_set! {BasicMetadataValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, MetadataValue}
+enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue, VectorValue, InstructionValue, TokenValue}
+enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, TokenValue}
+enum_value_set! {BasicMetadataValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, MetadataValue, TokenValue}
 
 impl<'ctx> AnyValueEnum<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
@@ -84,6 +84,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
             LLVMTypeKind::LLVMArrayTypeKind => AnyValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMVectorTypeKind => AnyValueEnum::VectorValue(VectorValue::new(value)),
             LLVMTypeKind::LLVMFunctionTypeKind => AnyValueEnum::FunctionValue(FunctionValue::new(value).unwrap()),
+            LLVMTypeKind::LLVMTokenTypeKind => AnyValueEnum::TokenValue(TokenValue::new(value)),
             LLVMTypeKind::LLVMVoidTypeKind => {
                 if unsafe { LLVMIsAInstruction(value) }.is_null() {
                     panic!("Void value isn't an instruction.");
@@ -175,6 +176,14 @@ impl<'ctx> AnyValueEnum<'ctx> {
         }
     }
 
+    pub fn is_token_value(self) -> bool {
+        if let AnyValueEnum::TokenValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
         if let AnyValueEnum::ArrayValue(v) = self {
             v
@@ -246,6 +255,14 @@ impl<'ctx> AnyValueEnum<'ctx> {
             panic!("Found {:?} but expected a different variant", self)
         }
     }
+
+    pub fn into_token_value(self) -> TokenValue<'ctx> {
+        if let AnyValueEnum::TokenValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
 }
 
 impl<'ctx> BasicValueEnum<'ctx> {
@@ -266,6 +283,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
             LLVMTypeKind::LLVMPointerTypeKind => BasicValueEnum::PointerValue(PointerValue::new(value)),
             LLVMTypeKind::LLVMArrayTypeKind => BasicValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMVectorTypeKind => BasicValueEnum::VectorValue(VectorValue::new(value)),
+            LLVMTypeKind::LLVMTokenTypeKind => BasicValueEnum::TokenValue(TokenValue::new(value)),
             _ => unreachable!("The given type is not a basic type."),
         }
     }
@@ -326,6 +344,14 @@ impl<'ctx> BasicValueEnum<'ctx> {
         }
     }
 
+    pub fn is_token_value(self) -> bool {
+        if let BasicValueEnum::TokenValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
         if let BasicValueEnum::ArrayValue(v) = self {
             v
@@ -368,6 +394,14 @@ impl<'ctx> BasicValueEnum<'ctx> {
 
     pub fn into_vector_value(self) -> VectorValue<'ctx> {
         if let BasicValueEnum::VectorValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_token_value(self) -> TokenValue<'ctx> {
+        if let BasicValueEnum::TokenValue(v) = self {
             v
         } else {
             panic!("Found {:?} but expected a different variant", self)
@@ -500,6 +534,14 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         }
     }
 
+    pub fn is_token_value(self) -> bool {
+        if let BasicMetadataValueEnum::TokenValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
         if let BasicMetadataValueEnum::ArrayValue(v) = self {
             v
@@ -555,6 +597,14 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
             panic!("Found {:?} but expected a different variant", self)
         }
     }
+
+    pub fn into_token_value(self) -> TokenValue<'ctx> {
+        if let BasicMetadataValueEnum::TokenValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
 }
 
 impl<'ctx> From<BasicValueEnum<'ctx>> for AnyValueEnum<'ctx> {
@@ -574,6 +624,7 @@ impl<'ctx> TryFrom<AnyValueEnum<'ctx>> for BasicValueEnum<'ctx> {
             AnyValueEnum::PointerValue(pv) => pv.into(),
             AnyValueEnum::StructValue(sv) => sv.into(),
             AnyValueEnum::VectorValue(vv) => vv.into(),
+            AnyValueEnum::TokenValue(tv) => tv.into(),
             _ => return Err(()),
         })
     }

@@ -18,6 +18,7 @@ mod metadata_value;
 mod phi_value;
 mod ptr_value;
 mod struct_value;
+mod token_value;
 mod traits;
 mod vec_value;
 
@@ -39,6 +40,7 @@ pub use crate::values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIN
 pub use crate::values::phi_value::PhiValue;
 pub use crate::values::ptr_value::PointerValue;
 pub use crate::values::struct_value::StructValue;
+pub use crate::values::token_value::TokenValue;
 pub use crate::values::traits::{AnyValue, AggregateValue, BasicValue, IntMathValue, FloatMathValue, PointerMathValue};
 pub use crate::values::vec_value::VectorValue;
 pub(crate) use crate::values::traits::AsValueRef;
