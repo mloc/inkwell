@@ -4,22 +4,6 @@ cache:
   directories:
     - /home/travis/.cargo
 
-# It's enough that we test master and PR branches. We don't also need to run
-# on the llvm-x branches
-branches:
-  except:
-  - llvm3-6
-  - llvm3-7
-  - llvm3-8
-  - llvm3-9
-  - llvm4-0
-  - llvm5-0
-  - llvm6-0
-  - llvm7-0
-  - llvm8-0
-  - llvm9-0
-  - llvm10-0
-
 before_cache:
   - cargo install cargo-tarpaulin
   - rm -rf /home/travis/.cargo/registry
@@ -38,13 +22,11 @@ include_base: &BASE
         - libssl-dev
   before_install:
     - export LLVM_VERSION_DASH=${LLVM_VERSION/./-}
-    - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
     - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
     - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
-    - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
   script:
-    - cargo build --no-default-features --features "target-all,llvm${LLVM_VERSION_DASH}" --color=always
-    - cargo test --no-default-features --features "target-all,llvm${LLVM_VERSION_DASH}" --verbose --color=always
+    - cargo build --features "target-all,llvm${LLVM_VERSION_DASH}" --color=always
+    - cargo test --features "target-all,llvm${LLVM_VERSION_DASH}" --verbose --color=always
 
 matrix:
   fast_finish: true
@@ -60,7 +42,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.6-dev
-      rust: 1.39.0
+      rust: 1.45.2
       dist: trusty
     - env:
         - LLVM_VERSION="3.7"
@@ -73,7 +55,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.7-dev
-      rust: 1.39.0
+      rust: 1.45.2
       dist: trusty
     - env:
         - LLVM_VERSION="3.8"
@@ -86,7 +68,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.8-dev
-      rust: 1.39.0
+      rust: 1.45.2
       dist: trusty
     # 3.9 seems to have a linking issue :/
     # - env:
@@ -96,12 +78,13 @@ matrix:
     #     apt:
     #       sources:
     #         - *BASE_SOURCES
-    #         - llvm-toolchain-trusty-3.9
+    #         - sourceline: 'deb https://apt.llvm.org/xenial/ llvm-toolchain-xenial-3.9 main'
+    #           key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
     #       packages:
     #         - *BASE_PACKAGES
     #         - llvm-3.9-dev
-    #       rust: 1.39.0
-    #       dist: trusty
+    #   rust: 1.42.0
+    #   dist: xenial
     - env:
         - LLVM_VERSION="4.0"
       <<: *BASE
@@ -113,7 +96,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-4.0-dev
-      rust: 1.39.0
+      rust: 1.45.2
       dist: trusty
     - env:
         - LLVM_VERSION="5.0"
@@ -126,7 +109,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-5.0-dev
-      rust: 1.39.0
+      rust: 1.45.2
       dist: trusty
     - env:
         - LLVM_VERSION="6.0"
@@ -139,7 +122,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-6.0-dev
-      rust: 1.39.0
+      rust: 1.45.2
       dist: trusty
     - env:
         - LLVM_VERSION="7.0"
@@ -152,7 +135,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-7-dev
-      rust: 1.39.0
+      rust: 1.45.2
       dist: trusty
     - env:
         - LLVM_VERSION="8.0"
@@ -165,7 +148,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-8-dev
-      rust: 1.39.0
+      rust: 1.45.2
       dist: trusty
     - env:
         - LLVM_VERSION="9.0"
@@ -180,7 +163,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-9-dev
-      rust: 1.39.0
+      rust: 1.45.2
       dist: bionic
     - env:
         - LLVM_VERSION="10.0"
@@ -196,7 +179,23 @@ matrix:
             - *BASE_PACKAGES
             - llvm-10-dev
             - libclang-common-10-dev
-      rust: 1.39.0
+      rust: 1.45.2
+      dist: bionic
+    - env:
+        - LLVM_VERSION="11.0"
+      <<: *BASE
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            - llvm-toolchain-bionic-11
+            - sourceline: 'deb https://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+          packages:
+            - *BASE_PACKAGES
+            - llvm-11-dev
+            - libclang-common-11-dev
+      rust: 1.45.2
       dist: bionic
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages
@@ -207,10 +206,10 @@ matrix:
         on:
           branch: master
       before_install:
-        - export PATH=/usr/lib/llvm-10/bin/:$HOME/.local/bin:$PATH
-        - export LLVM_PATH=/usr/share/llvm-10/cmake/
+        - export PATH=/usr/lib/llvm-11/bin/:$HOME/.local/bin:$PATH
+        - export LLVM_PATH=/usr/share/llvm-11/cmake/
       script:
-        - cargo doc --no-default-features --features "target-all,llvm10-0" --color=always
+        - cargo doc --no-default-features --features "target-all,llvm11-0,nightly" --color=always
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
       rust: nightly
       name: "GitHub IO Documentation Deployment"
@@ -228,8 +227,9 @@ matrix:
             # - llvm-toolchain-trusty-7
             # - llvm-toolchain-trusty-8
             # - llvm-toolchain-bionic-9
-            - llvm-toolchain-bionic-10
-            - sourceline: 'deb https://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
+            # llvm-toolchain-bionic-10
+            - llvm-toolchain-bionic-11
+            - sourceline: 'deb https://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
               key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
           packages:
             - *BASE_PACKAGES
@@ -243,7 +243,8 @@ matrix:
             # - llvm-7-dev
             # - llvm-8-dev
             # - llvm-9-dev
-            - llvm-10-dev
+            # llvm-10-dev
+            - llvm-11-dev
       dist: bionic
 
 env:
@@ -251,7 +252,7 @@ env:
     - RUSTFLAGS="-C link-dead-code -C target-cpu=native -l ffi"
 
 after_success: |
-  if [[ "$TRAVIS_RUST_VERSION" == 1.39.0 ]]; then
+  if [[ "$TRAVIS_RUST_VERSION" == 1.45.2 ]]; then
     cargo tarpaulin --features "llvm${LLVM_VERSION_DASH}" --out Xml
     bash <(curl -s https://codecov.io/bash)
   fi
