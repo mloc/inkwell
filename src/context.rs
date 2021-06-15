@@ -1,6 +1,6 @@
 //! A `Context` is an opaque owner and manager of core global data.
 
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext, LLVMConstStringInContext, LLVMContextSetDiagnosticHandler, LLVMTokenTypeInContext};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMConstStringInContext, LLVMConstStructInContext, LLVMContextCreate, LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext, LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructSetBody, LLVMStructTypeInContext, LLVMTokenTypeInContext, LLVMVoidTypeInContext, LLVMX86FP80TypeInContext};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 #[llvm_versions(3.6..7.0)]
@@ -620,6 +620,22 @@ impl Context {
                                                            .collect();
         let struct_type = unsafe {
             LLVMStructTypeInContext(self.context, field_types.as_mut_ptr(), field_types.len() as u32, packed as i32)
+        };
+
+        StructType::new(struct_type)
+    }
+
+    /// Creates a `StructType` definiton from heterogeneous types in the current `Context` with a
+    /// given name.
+    pub fn named_struct_type(&self, field_types: &[BasicTypeEnum], packed: bool, name: &str) -> StructType {
+        let c_string = to_c_str(name);
+        let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
+                                                           .map(|val| val.as_type_ref())
+                                                           .collect();
+        let struct_type = unsafe {
+            let ty = LLVMStructCreateNamed(self.context, c_string.as_ptr());
+            LLVMStructSetBody(ty, field_types.as_mut_ptr(), field_types.len() as u32, packed as i32);
+            ty
         };
 
         StructType::new(struct_type)
