@@ -6,7 +6,7 @@ use crate::types::{AnyTypeEnum, BasicTypeEnum};
 use crate::values::traits::AsValueRef;
 use crate::values::{
     ArrayValue, FloatValue, FunctionValue, InstructionValue, IntValue, MetadataValue, PhiValue, PointerValue,
-    ScalableVectorValue, StructValue, VectorValue,
+    ScalableVectorValue, StructValue, TokenValue, VectorValue,
 };
 
 use std::convert::TryFrom;
@@ -68,9 +68,9 @@ macro_rules! enum_value_set {
 }
 
 enum_value_set! {AggregateValueEnum: ArrayValue, StructValue}
-enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue, VectorValue, ScalableVectorValue, InstructionValue, MetadataValue}
-enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, ScalableVectorValue}
-enum_value_set! {BasicMetadataValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, ScalableVectorValue, MetadataValue}
+enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue, VectorValue, ScalableVectorValue, TokenValue, InstructionValue, MetadataValue}
+enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, ScalableVectorValue, TokenValue}
+enum_value_set! {BasicMetadataValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, ScalableVectorValue, TokenValue, MetadataValue}
 
 impl<'ctx> AnyValueEnum<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -108,6 +108,8 @@ impl<'ctx> AnyValueEnum<'ctx> {
                 AnyValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
             },
             LLVMTypeKind::LLVMFunctionTypeKind => AnyValueEnum::FunctionValue(FunctionValue::new(value).unwrap()),
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            LLVMTypeKind::LLVMTokenTypeKind => AnyValueEnum::TokenValue(TokenValue::new(value)),
             LLVMTypeKind::LLVMVoidTypeKind => {
                 if LLVMIsAInstruction(value).is_null() {
                     panic!("Void value isn't an instruction.");
@@ -161,6 +163,10 @@ impl<'ctx> AnyValueEnum<'ctx> {
 
     pub fn is_instruction_value(self) -> bool {
         matches!(self, AnyValueEnum::InstructionValue(_))
+    }
+
+    pub fn is_token_value(self) -> bool {
+        matches!(self, AnyValueEnum::TokenValue(_))
     }
 
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
@@ -242,6 +248,14 @@ impl<'ctx> AnyValueEnum<'ctx> {
             panic!("Found {:?} but expected the InstructionValue variant", self)
         }
     }
+
+    pub fn into_token_value(self) -> TokenValue<'ctx> {
+        if let AnyValueEnum::TokenValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected the TokenValue variant", self)
+        }
+    }
 }
 
 impl<'ctx> BasicValueEnum<'ctx> {
@@ -276,6 +290,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 BasicValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
             },
+            LLVMTypeKind::LLVMTokenTypeKind => BasicValueEnum::TokenValue(TokenValue::new(value)),
             _ => unreachable!("The given type is not a basic type."),
         }
     }
@@ -290,6 +305,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
             BasicValueEnum::StructValue(v) => v.get_name(),
             BasicValueEnum::VectorValue(v) => v.get_name(),
             BasicValueEnum::ScalableVectorValue(v) => v.get_name(),
+            BasicValueEnum::TokenValue(v) => v.get_name(),
         }
     }
 
@@ -303,6 +319,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
             BasicValueEnum::StructValue(v) => v.set_name(name),
             BasicValueEnum::VectorValue(v) => v.set_name(name),
             BasicValueEnum::ScalableVectorValue(v) => v.set_name(name),
+            BasicValueEnum::TokenValue(v) => v.set_name(name),
         }
     }
 
@@ -336,6 +353,10 @@ impl<'ctx> BasicValueEnum<'ctx> {
 
     pub fn is_scalable_vector_value(self) -> bool {
         matches!(self, BasicValueEnum::ScalableVectorValue(_))
+    }
+
+    pub fn is_token_value(self) -> bool {
+        matches!(self, BasicValueEnum::TokenValue(_))
     }
 
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
@@ -391,6 +412,14 @@ impl<'ctx> BasicValueEnum<'ctx> {
             v
         } else {
             panic!("Found {:?} but expected the ScalableVectorValue variant", self)
+        }
+    }
+
+    pub fn into_token_value(self) -> TokenValue<'ctx> {
+        if let BasicValueEnum::TokenValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected the TokenValue variant", self)
         }
     }
 }
@@ -462,6 +491,8 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
                 BasicMetadataValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
             },
             LLVMTypeKind::LLVMMetadataTypeKind => BasicMetadataValueEnum::MetadataValue(MetadataValue::new(value)),
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            LLVMTypeKind::LLVMTokenTypeKind => BasicMetadataValueEnum::TokenValue(TokenValue::new(value)),
             _ => unreachable!("Unsupported type"),
         }
     }
@@ -496,6 +527,10 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
 
     pub fn is_metadata_value(self) -> bool {
         matches!(self, BasicMetadataValueEnum::MetadataValue(_))
+    }
+
+    pub fn is_token_value(self) -> bool {
+        matches!(self, BasicMetadataValueEnum::TokenValue(_))
     }
 
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
@@ -561,6 +596,14 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
             panic!("Found {:?} but expected MetaData variant", self)
         }
     }
+
+    pub fn into_token_value(self) -> TokenValue<'ctx> {
+        if let BasicMetadataValueEnum::TokenValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected the TokenValue variant", self)
+        }
+    }
 }
 
 impl<'ctx> From<BasicValueEnum<'ctx>> for AnyValueEnum<'ctx> {
@@ -588,6 +631,7 @@ impl<'ctx> TryFrom<AnyValueEnum<'ctx>> for BasicValueEnum<'ctx> {
             StructValue(sv) => sv.into(),
             VectorValue(vv) => vv.into(),
             ScalableVectorValue(vv) => vv.into(),
+            TokenValue(tv) => tv.into(),
             MetadataValue(_) | PhiValue(_) | FunctionValue(_) | InstructionValue(_) => return Err(()),
         })
     }
@@ -606,6 +650,7 @@ impl<'ctx> TryFrom<AnyValueEnum<'ctx>> for BasicMetadataValueEnum<'ctx> {
             StructValue(sv) => sv.into(),
             VectorValue(vv) => vv.into(),
             ScalableVectorValue(vv) => vv.into(),
+            TokenValue(tv) => tv.into(),
             MetadataValue(mv) => mv.into(),
             PhiValue(_) | FunctionValue(_) | InstructionValue(_) => return Err(()),
         })
@@ -625,6 +670,7 @@ impl<'ctx> TryFrom<BasicMetadataValueEnum<'ctx>> for BasicValueEnum<'ctx> {
             StructValue(sv) => sv.into(),
             VectorValue(vv) => vv.into(),
             ScalableVectorValue(vv) => vv.into(),
+            TokenValue(tv) => tv.into(),
             MetadataValue(_) => return Err(()),
         })
     }

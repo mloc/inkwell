@@ -18,6 +18,8 @@ mod scalable_vec_type;
 #[deny(missing_docs)]
 mod struct_type;
 #[deny(missing_docs)]
+mod token_type;
+#[deny(missing_docs)]
 mod traits;
 #[deny(missing_docs)]
 mod vec_type;
@@ -34,6 +36,7 @@ pub use crate::types::ptr_type::PointerType;
 pub use crate::types::scalable_vec_type::ScalableVectorType;
 pub use crate::types::struct_type::FieldTypesIter;
 pub use crate::types::struct_type::StructType;
+pub use crate::types::token_type::TokenType;
 pub use crate::types::traits::{AnyType, AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType};
 pub use crate::types::vec_type::VectorType;
 pub use crate::types::void_type::VoidType;

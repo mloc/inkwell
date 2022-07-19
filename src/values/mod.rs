@@ -18,6 +18,7 @@ mod phi_value;
 mod ptr_value;
 mod scalable_vec_value;
 mod struct_value;
+mod token_value;
 mod traits;
 mod vec_value;
 
@@ -63,6 +64,7 @@ pub use crate::values::ptr_value::PointerValue;
 pub use crate::values::scalable_vec_value::ScalableVectorValue;
 pub use crate::values::struct_value::FieldValueIter;
 pub use crate::values::struct_value::StructValue;
+pub use crate::values::token_value::TokenValue;
 pub use crate::values::traits::AsValueRef;
 pub use crate::values::traits::{
     AggregateValue, AnyValue, BasicValue, FloatMathValue, IntMathValue, PointerMathValue, VectorBaseValue,

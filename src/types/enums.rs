@@ -6,7 +6,8 @@ use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::MetadataType;
 use crate::types::{
-    ArrayType, FloatType, FunctionType, IntType, PointerType, ScalableVectorType, StructType, VectorType, VoidType,
+    ArrayType, FloatType, FunctionType, IntType, PointerType, ScalableVectorType, StructType, TokenType, VectorType,
+    VoidType,
 };
 use crate::values::{BasicValue, BasicValueEnum, IntValue};
 
@@ -68,6 +69,8 @@ enum_type_set! {
         IntType,
         /// A pointer type.
         PointerType,
+        /// A token type.
+        TokenType,
         /// A contiguous heterogeneous container type.
         StructType,
         /// A contiguous homogeneous "SIMD" container type.
@@ -89,6 +92,8 @@ enum_type_set! {
         IntType,
         /// A pointer type.
         PointerType,
+        /// A token type.
+        TokenType,
         /// A contiguous heterogeneous container type.
         StructType,
         /// A contiguous homogeneous "SIMD" container type.
@@ -103,6 +108,7 @@ enum_type_set! {
         FloatType,
         IntType,
         PointerType,
+        TokenType,
         StructType,
         VectorType,
         ScalableVectorType,
@@ -137,6 +143,14 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
 
     pub fn into_pointer_type(self) -> PointerType<'ctx> {
         if let BasicMetadataTypeEnum::PointerType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_token_type(self) -> TokenType<'ctx> {
+        if let BasicMetadataTypeEnum::TokenType(t) = self {
             t
         } else {
             panic!("Found {:?} but expected another variant", self);
@@ -195,6 +209,10 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
         matches!(self, BasicMetadataTypeEnum::PointerType(_))
     }
 
+    pub fn is_token_type(self) -> bool {
+        matches!(self, BasicMetadataTypeEnum::TokenType(_))
+    }
+
     pub fn is_struct_type(self) -> bool {
         matches!(self, BasicMetadataTypeEnum::StructType(_))
     }
@@ -214,6 +232,7 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
             BasicMetadataTypeEnum::IntType(t) => t.print_to_string(),
             BasicMetadataTypeEnum::FloatType(t) => t.print_to_string(),
             BasicMetadataTypeEnum::PointerType(t) => t.print_to_string(),
+            BasicMetadataTypeEnum::TokenType(t) => t.print_to_string(),
             BasicMetadataTypeEnum::StructType(t) => t.print_to_string(),
             BasicMetadataTypeEnum::VectorType(t) => t.print_to_string(),
             BasicMetadataTypeEnum::ScalableVectorType(t) => t.print_to_string(),
@@ -265,6 +284,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
                 feature = "llvm18-0"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => AnyTypeEnum::ScalableVectorType(ScalableVectorType::new(type_)),
+            LLVMTypeKind::LLVMTokenTypeKind => AnyTypeEnum::TokenType(TokenType::new(type_)),
             // FIXME: should inkwell support metadata as AnyType?
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("Metadata type is not supported as AnyType."),
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
@@ -278,7 +298,6 @@ impl<'ctx> AnyTypeEnum<'ctx> {
                 feature = "llvm18-0"
             ))]
             LLVMTypeKind::LLVMX86_AMXTypeKind => panic!("FIXME: Unsupported type: AMX"),
-            LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),
             #[cfg(any(feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
             LLVMTypeKind::LLVMTargetExtTypeKind => panic!("FIXME: Unsupported type: TargetExt"),
         }
@@ -326,6 +345,14 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             t
         } else {
             panic!("Found {:?} but expected the PointerType variant", self);
+        }
+    }
+
+    pub fn into_token_type(self) -> TokenType<'ctx> {
+        if let AnyTypeEnum::TokenType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected the TokenType variant", self);
         }
     }
 
@@ -381,6 +408,10 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         matches!(self, AnyTypeEnum::PointerType(_))
     }
 
+    pub fn is_token_type(self) -> bool {
+        matches!(self, AnyTypeEnum::TokenType(_))
+    }
+
     pub fn is_struct_type(self) -> bool {
         matches!(self, AnyTypeEnum::StructType(_))
     }
@@ -402,6 +433,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             AnyTypeEnum::StructType(t) => t.size_of(),
             AnyTypeEnum::VectorType(t) => t.size_of(),
             AnyTypeEnum::ScalableVectorType(t) => t.size_of(),
+            AnyTypeEnum::TokenType(_) => None,
             AnyTypeEnum::VoidType(_) => None,
             AnyTypeEnum::FunctionType(_) => None,
         }
@@ -414,6 +446,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             AnyTypeEnum::FloatType(t) => t.print_to_string(),
             AnyTypeEnum::IntType(t) => t.print_to_string(),
             AnyTypeEnum::PointerType(t) => t.print_to_string(),
+            AnyTypeEnum::TokenType(t) => t.print_to_string(),
             AnyTypeEnum::StructType(t) => t.print_to_string(),
             AnyTypeEnum::VectorType(t) => t.print_to_string(),
             AnyTypeEnum::ScalableVectorType(t) => t.print_to_string(),
@@ -465,6 +498,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 BasicTypeEnum::ScalableVectorType(ScalableVectorType::new(type_))
             },
+            LLVMTypeKind::LLVMTokenTypeKind => BasicTypeEnum::TokenType(TokenType::new(type_)),
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("Unsupported basic type: Metadata"),
             // see https://llvm.org/docs/LangRef.html#x86-mmx-type
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("Unsupported basic type: MMX"),
@@ -482,7 +516,6 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             LLVMTypeKind::LLVMLabelTypeKind => unreachable!("Unsupported basic type: Label"),
             LLVMTypeKind::LLVMVoidTypeKind => unreachable!("Unsupported basic type: VoidType"),
             LLVMTypeKind::LLVMFunctionTypeKind => unreachable!("Unsupported basic type: FunctionType"),
-            LLVMTypeKind::LLVMTokenTypeKind => unreachable!("Unsupported basic type: Token"),
             #[cfg(any(feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
             LLVMTypeKind::LLVMTargetExtTypeKind => unreachable!("Unsupported basic type: TargetExt"),
         }
@@ -517,6 +550,14 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             t
         } else {
             panic!("Found {:?} but expected the PointerType variant", self);
+        }
+    }
+
+    pub fn into_token_type(self) -> TokenType<'ctx> {
+        if let BasicTypeEnum::TokenType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
         }
     }
 
@@ -560,6 +601,10 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         matches!(self, BasicTypeEnum::PointerType(_))
     }
 
+    pub fn is_token_type(self) -> bool {
+        matches!(self, BasicTypeEnum::TokenType(_))
+    }
+
     pub fn is_struct_type(self) -> bool {
         matches!(self, BasicTypeEnum::StructType(_))
     }
@@ -592,6 +637,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             BasicTypeEnum::StructType(ty) => ty.const_zero().as_basic_value_enum(),
             BasicTypeEnum::VectorType(ty) => ty.const_zero().as_basic_value_enum(),
             BasicTypeEnum::ScalableVectorType(ty) => ty.const_zero().as_basic_value_enum(),
+            BasicTypeEnum::TokenType(_) => todo!(),
         }
     }
 
@@ -602,6 +648,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             BasicTypeEnum::FloatType(t) => t.print_to_string(),
             BasicTypeEnum::IntType(t) => t.print_to_string(),
             BasicTypeEnum::PointerType(t) => t.print_to_string(),
+            BasicTypeEnum::TokenType(t) => t.print_to_string(),
             BasicTypeEnum::StructType(t) => t.print_to_string(),
             BasicTypeEnum::VectorType(t) => t.print_to_string(),
             BasicTypeEnum::ScalableVectorType(t) => t.print_to_string(),
@@ -622,6 +669,7 @@ impl<'ctx> TryFrom<AnyTypeEnum<'ctx>> for BasicTypeEnum<'ctx> {
             StructType(st) => st.into(),
             VectorType(vt) => vt.into(),
             ScalableVectorType(vt) => vt.into(),
+            TokenType(tt) => tt.into(),
             VoidType(_) | FunctionType(_) => return Err(()),
         })
     }
@@ -640,6 +688,7 @@ impl<'ctx> TryFrom<AnyTypeEnum<'ctx>> for BasicMetadataTypeEnum<'ctx> {
             StructType(st) => st.into(),
             VectorType(vt) => vt.into(),
             ScalableVectorType(vt) => vt.into(),
+            TokenType(tt) => tt.into(),
             VoidType(_) | FunctionType(_) => return Err(()),
         })
     }
@@ -658,6 +707,7 @@ impl<'ctx> TryFrom<BasicMetadataTypeEnum<'ctx>> for BasicTypeEnum<'ctx> {
             StructType(st) => st.into(),
             VectorType(vt) => vt.into(),
             ScalableVectorType(vt) => vt.into(),
+            TokenType(tt) => tt.into(),
             MetadataType(_) => return Err(()),
         })
     }
@@ -674,6 +724,7 @@ impl<'ctx> From<BasicTypeEnum<'ctx>> for BasicMetadataTypeEnum<'ctx> {
             StructType(st) => st.into(),
             VectorType(vt) => vt.into(),
             ScalableVectorType(vt) => vt.into(),
+            TokenType(tt) => tt.into(),
         }
     }
 }
